@@ -13,6 +13,7 @@ import re
 import sys
 import time
 from urllib.request import Request, urlopen
+from profile_motion import animated_banner, animated_snake
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "assets"
@@ -103,18 +104,8 @@ def svg(width, height, title, content):
 
 
 def static_assets():
-    banner = '<defs><linearGradient id="glow" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#29151f"/><stop offset="1" stop-color="#111721"/></linearGradient></defs>'
-    banner += rect(1, 1, 898, 252, "url(#glow)", 18, BORDER)
-    for x in range(540, 900, 30):
-        for y in range(22, 250, 30):
-            banner += f'<circle cx="{x}" cy="{y}" r="1.2" fill="#a8495a" opacity="0.3"/>'
-    banner += rect(34, 30, 144, 28, "#3c1c28", 14)
-    banner += text(48, 49, "WESLEI17DEV", 12, "#ff93a0", "700", 'letter-spacing="1.5"')
-    banner += text(34, 116, "Weslei Campos", 48, INK, "750")
-    banner += text(36, 153, "Desenvolvimento · Dados · Automação", 20, "#efbec6")
-    banner += text(36, 208, "Ideias que viram ferramentas para o dia a dia.", 16, MUTED)
-    banner += '<path d="M735 73 L700 108 L735 143 M793 73 L828 108 L793 143 M773 59 L752 157" fill="none" stroke="#ff4d61" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>'
-    ASSETS.joinpath("banner.svg").write_text(svg(900, 254, "Weslei Campos — Desenvolvimento, Dados e Automação", banner), encoding="utf-8")
+    ASSETS.joinpath("banner.svg").write_text(animated_banner(), encoding="utf-8")
+    ASSETS.joinpath("banner-mobile.svg").write_text(animated_banner(mobile=True), encoding="utf-8")
     for filename, label, width, fill in [("linkedin", "LinkedIn ↗", 133, "#a32b40"), ("github", "Meus projetos ↗", 174, PANEL)]:
         body = rect(1, 1, width - 2, 34, fill, 8, "#63313d" if filename == "linkedin" else BORDER)
         body += text(width / 2, 23, label, 13, INK, "600", 'text-anchor="middle"')
@@ -212,7 +203,8 @@ def calendar(data):
 
 def render(data):
     # Generate everything before replacing any asset; failed retrievals preserve the snapshot.
-    generated = {"dashboard.svg": dashboard(data), "calendar.svg": calendar(data)}
+    generated = {"dashboard.svg": dashboard(data), "calendar.svg": calendar(data),
+                 "snake.svg": animated_snake(data), "snake-mobile.svg": animated_snake(data, mobile=True)}
     ASSETS.mkdir(parents=True, exist_ok=True)
     static_assets()
     for filename, content in generated.items():

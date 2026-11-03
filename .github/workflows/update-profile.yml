@@ -7,7 +7,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'scripts/update_profile.py'
+      - 'scripts/*.py'
       - '.github/workflows/update-profile.yml'
 
 permissions:

@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="./assets/banner.svg" width="100%" alt="Weslei Campos — Desenvolvimento, Dados e Automação" />
+  <picture>
+    <source media="(max-width: 600px)" srcset="./assets/banner-mobile.svg?v=motion-1" />
+    <img src="./assets/banner.svg?v=motion-1" width="100%" alt="Weslei Campos — banner animado sobre Desenvolvimento, Dados e Automação" />
+  </picture>
 </p>
 
 <p align="center">
@@ -37,7 +40,10 @@ Por aqui, compartilho meus projetos de desenvolvimento e análise de dados, alé
 
 <img src="./assets/dashboard.svg" width="100%" alt="Indicadores reais do perfil, distribuição de linguagens por bytes e contribuições por mês" />
 
-<img src="./assets/calendar.svg" width="100%" alt="Calendário de contribuições exibidas no perfil público, com intensidade em vermelho" />
+<picture>
+  <source media="(max-width: 600px)" srcset="./assets/snake-mobile.svg?v=motion-1" />
+  <img src="./assets/snake.svg?v=motion-1" width="100%" alt="Cobrinha vermelha animada percorrendo meu calendário de contribuições públicas" />
+</picture>
 
 <sub>Dados consultados no GitHub. Linguagens representam bytes de código dos projetos públicos próprios, sem forks e sem este repositório de perfil; não são uma medida de domínio. A atividade segue o calendário exibido no perfil público. Os gráficos têm atualização diária configurada via GitHub Actions.</sub>
 
