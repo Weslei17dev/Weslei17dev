@@ -45,7 +45,7 @@ Por aqui, compartilho meus projetos de desenvolvimento e análise de dados, alé
   <img src="./assets/snake.svg?v=motion-1" width="100%" alt="Cobrinha vermelha animada percorrendo meu calendário de contribuições públicas" />
 </picture>
 
-<sub>Dados consultados no GitHub. Linguagens representam bytes de código dos projetos públicos próprios, sem forks e sem este repositório de perfil; não são uma medida de domínio. A atividade segue o calendário exibido no perfil público. Os gráficos têm atualização diária configurada via GitHub Actions.</sub>
+<sub>Dados consultados no GitHub. Linguagens representam bytes de código dos projetos públicos próprios, sem forks e sem este repositório de perfil; não são uma medida de domínio. Com o perfil privado, a atividade dos gráficos e da cobrinha usa o último histórico público salvo. Repositórios e linguagens continuam atualizados diariamente.</sub>
 
 ---
 

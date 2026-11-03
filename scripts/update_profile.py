@@ -17,6 +17,7 @@ from profile_motion import animated_banner, animated_snake
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "assets"
+ACTIVITY_CACHE = ROOT / "data" / "contributions.json"
 LOGIN = "Weslei17dev"
 BG, PANEL, BORDER, INK, MUTED, RED = "#0d1117", "#161b22", "#30363d", "#f0f3f6", "#a5afbc", "#ff4d61"
 MONTHS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
@@ -70,6 +71,30 @@ class CalendarParser(HTMLParser):
         return sorted([dict(cell, count=self.counts[key]) for key, cell in self.cells.items()], key=lambda x: x["date"])
 
 
+def collect_activity():
+    """Keep the last public history when profile privacy hides the calendar."""
+    today = date.today().isoformat()
+    try:
+        parser = CalendarParser()
+        parser.feed(get(f"https://github.com/users/{LOGIN}/contributions"))
+        days = parser.result()
+    except (OSError, ValueError):
+        if not ACTIVITY_CACHE.exists():
+            raise
+        days = []
+    if not any(day["count"] for day in days) and ACTIVITY_CACHE.exists():
+        saved = json.loads(ACTIVITY_CACHE.read_text(encoding="utf-8"))
+        date.fromisoformat(saved["updated"])
+        if len(saved["days"]) < 350:
+            raise ValueError("Histórico salvo incompleto")
+        for day in saved["days"]:
+            date.fromisoformat(day["date"])
+            if day["count"] < 0 or day["level"] not in range(5):
+                raise ValueError("Histórico salvo inválido")
+        return saved["days"], saved["updated"], True
+    return days, today, False
+
+
 def collect():
     repositories, page = [], 1
     while True:
@@ -85,10 +110,9 @@ def collect():
     with ThreadPoolExecutor(max_workers=4) as pool:
         for result in pool.map(lambda r: json.loads(get(r["languages_url"])), projects):
             languages.update(result)
-    parser = CalendarParser()
-    parser.feed(get(f"https://github.com/users/{LOGIN}/contributions"))
-    days = parser.result()
-    return {"updated": date.today().isoformat(), "repositories": len(repositories), "languages": dict(languages), "days": days}
+    days, activity_updated, activity_saved = collect_activity()
+    return {"updated": date.today().isoformat(), "repositories": len(repositories), "languages": dict(languages),
+            "days": days, "activity_updated": activity_updated, "activity_saved": activity_saved}
 
 
 def text(x, y, content, size=14, color=INK, weight="400", extra=""):
@@ -127,10 +151,12 @@ def dashboard(data):
     total = sum(d["count"] for d in days)
     active = sum(d["count"] > 0 for d in days)
     stamp = date.fromisoformat(data["updated"]).strftime("%d/%m/%Y")
+    activity_stamp = date.fromisoformat(data.get("activity_updated", data["updated"])).strftime("%d/%m/%Y")
+    saved = data.get("activity_saved", False)
     body = rect(1, 1, 898, 458, BG, 14, BORDER)
     body += text(26, 33, "CÓDIGO, DADOS E CONSTÂNCIA", 13, MUTED, "650", 'letter-spacing="1.6"')
     body += text(873, 33, "GitHub · " + stamp, 12, MUTED, extra='text-anchor="end"')
-    for i, (value, label) in enumerate([(data["repositories"], "repositórios públicos"), (len(langs), "linguagens no código"), (total, "contribuições no período"), (active, "dias com atividade")]):
+    for i, (value, label) in enumerate([(data["repositories"], "repositórios públicos"), (len(langs), "linguagens no código"), (total, "contribuições salvas" if saved else "contribuições no período"), (active, "dias no histórico" if saved else "dias com atividade")]):
         x = 24 + i * 219
         body += rect(x, 53, 199, 91, PANEL, 10)
         body += text(x + 16, 95, value, 31, RED if i == 2 else INK, "700")
@@ -149,8 +175,8 @@ def dashboard(data):
         body += text(411, y, f"{pct:.1f}%", 12, MUTED, extra='text-anchor="end"')
     body += '<path d="M445 170 V421" stroke="#30363d"/>'
     body += text(471, 182, "Atividade ao longo do tempo", 17, INK, "600")
-    body += text(471, 203, "Contribuições por mês · últimos 12 meses", 12, MUTED)
-    today = date.fromisoformat(data["updated"])
+    body += text(471, 203, "12 meses até " + activity_stamp if saved else "Contribuições por mês · últimos 12 meses", 12, MUTED)
+    today = date.fromisoformat(data.get("activity_updated", data["updated"]))
     months = []
     for i in range(11, -1, -1):
         index = today.year * 12 + today.month - 1 - i
@@ -167,7 +193,7 @@ def dashboard(data):
         if value:
             body += text(x + 10.5, 369 - height, value, 11, INK, "500", 'text-anchor="middle"')
         body += text(x + 10.5, 400, MONTHS[month - 1], 10, MUTED, extra='text-anchor="middle"')
-    body += text(475, 432, "Período atual pode estar incompleto.", 11, MUTED)
+    body += text(475, 432, "Histórico público salvo em " + activity_stamp + "." if saved else "Período atual pode estar incompleto.", 11, MUTED)
     if len(langs) > 6:
         body += text(27, 437, f"Exibindo 6 de {len(langs)} linguagens.", 11, MUTED)
     return svg(900, 460, f"{data['repositories']} repositórios públicos, {total} contribuições e {active} dias com atividade. Atualizado em {stamp}.", body)
@@ -179,7 +205,8 @@ def calendar(data):
     start = first - timedelta(days=(first.weekday() + 1) % 7)
     body = rect(1, 1, 898, 217, BG, 14, BORDER)
     body += text(26, 33, "Um pouco a cada dia", 17, INK, "600")
-    body += text(26, 55, "Calendário exibido no perfil público", 12, MUTED)
+    activity_stamp = date.fromisoformat(data.get("activity_updated", data["updated"])).strftime("%d/%m/%Y")
+    body += text(26, 55, "Histórico público salvo em " + activity_stamp if data.get("activity_saved") else "Calendário exibido no perfil público", 12, MUTED)
     palette = ["#1b222c", "#582333", "#923147", "#cc3b54", RED]
     seen = set()
     for d in days:
@@ -211,6 +238,12 @@ def render(data):
         temporary = ASSETS / (filename + ".tmp")
         temporary.write_text(content, encoding="utf-8")
         temporary.replace(ASSETS / filename)
+    if not data.get("activity_saved", False):
+        ACTIVITY_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        cache = {"updated": data.get("activity_updated", data["updated"]), "days": data["days"]}
+        temporary = ACTIVITY_CACHE.with_suffix(".tmp")
+        temporary.write_text(json.dumps(cache, ensure_ascii=False) + "\n", encoding="utf-8")
+        temporary.replace(ACTIVITY_CACHE)
     print(f"Gráficos atualizados: {data['repositories']} repositórios, {sum(d['count'] for d in data['days'])} contribuições.")
 
 

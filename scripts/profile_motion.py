@@ -117,7 +117,9 @@ def animated_snake(data, mobile=False):
             f'width="{columns * step_x + 20}" height="110"/></clipPath></defs>'
             f'<rect x="1" y="1" width="{width-2}" height="{height-2}" rx="14" fill="{BG}" stroke="#30363d"/>')
     body += text(26, 33, "Um pouco a cada dia", 17, INK, 'font-weight="600"')
-    body += text(26, 55, "Cobrinha de contribuições · " + ("últimas 26 semanas" if mobile else "último ano"), 12, MUTED)
+    activity_stamp = date.fromisoformat(data.get("activity_updated", data["updated"])).strftime("%d/%m/%Y")
+    subtitle = "Histórico público salvo em " + activity_stamp if data.get("activity_saved") else "Cobrinha de contribuições · " + ("últimas 26 semanas" if mobile else "último ano")
+    body += text(26, 55, subtitle, 12, MUTED)
     month_labels = set()
     for (x, y), item in sorted(grid.items()):
         current = date.fromisoformat(item["date"])
